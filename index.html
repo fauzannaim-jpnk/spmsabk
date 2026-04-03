@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analisis SPM SABK JPN Kedah</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6fa; color: #1a1a2e; min-height: 100vh; }
+.page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.header { background: #1a4a8a; color: #fff; padding: 1.4rem 1.8rem; border-radius: 12px; margin-bottom: 1.25rem; }
+.header h1 { font-size: 16px; font-weight: 600; line-height: 1.5; }
+.header p  { font-size: 12px; opacity: 0.7; margin-top: 5px; }
+
+/* Search */
+.search-wrap { position: relative; margin-bottom: 1.25rem; }
+.search-wrap input {
+  width: 100%; padding: 11px 16px 11px 42px;
+  border: 1.5px solid #cbd5e1; border-radius: 10px;
+  font-size: 13px; background: #fff; color: #1a1a2e; outline: none;
+  transition: border-color .15s;
+}
+.search-wrap input:focus { border-color: #2e7dd1; box-shadow: 0 0 0 3px rgba(46,125,209,.1); }
+.search-wrap input::placeholder { color: #94a3b8; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: #94a3b8; }
+.search-results {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.1); z-index: 200; overflow: hidden;
+}
+.search-item { padding: 9px 14px; font-size: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; color: #1a1a2e; }
+.search-item:last-child { border-bottom: none; }
+.search-item:hover { background: #eff6ff; color: #1a4a8a; }
+.ppd-tag { font-size: 10px; background: #e0f2fe; color: #0369a1; padding: 1px 7px; border-radius: 6px; flex-shrink: 0; font-weight: 600; }
+.search-no { padding: 10px 14px; font-size: 12px; color: #94a3b8; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.kpi { background: #fff; border-radius: 10px; padding: 14px 16px; border: 1px solid #e2e8f0; }
+.kpi-label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+.kpi-val   { font-size: 24px; font-weight: 600; color: #1a4a8a; }
+.kpi-sub   { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+
+.section { background: #fff; border-radius: 12px; padding: 1.1rem 1.4rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; }
+.sec-title { font-size: 13px; font-weight: 600; color: #1a4a8a; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.sec-title::before { content: ''; width: 3px; height: 14px; background: #2e7dd1; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+.controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.controls label { font-size: 12px; color: #64748b; }
+select { font-size: 12px; padding: 5px 9px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #1a1a2e; cursor: pointer; outline: none; }
+select:focus { border-color: #2e7dd1; }
+
+.tab-row { display: flex; gap: 5px; }
+.tab { font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 1px solid #cbd5e1; background: transparent; color: #64748b; cursor: pointer; transition: all .15s; }
+.tab.active { background: #1a4a8a; color: #fff; border-color: #1a4a8a; }
+.tab:hover:not(.active) { background: #f1f5f9; }
+
+.chart-wrap { position: relative; width: 100%; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { font-size: 11px; font-weight: 600; color: #64748b; text-align: left; padding: 7px 9px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+td { padding: 7px 9px; border-bottom: 1px solid #f1f5f9; color: #1a1a2e; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+.rank { font-size: 10px; color: #94a3b8; }
+
+.school-link { color: #1a4a8a; cursor: pointer; font-weight: 500; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; white-space: nowrap; }
+.school-link:hover { color: #2e7dd1; text-decoration-style: solid; }
+
+.badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.badge-good { background: #dcfce7; color: #166534; }
+.badge-mid  { background: #fef9c3; color: #854d0e; }
+.badge-low  { background: #fee2e2; color: #991b1b; }
+.badge-mp   { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+
+.info-note { font-size: 11px; color: #64748b; background: #f8fafc; border-radius: 8px; padding: 8px 12px; margin-top: 10px; border-left: 3px solid #2e7dd1; }
+.tbl-wrap  { overflow-x: auto; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,23,42,.6); z-index: 500;
+  justify-content: center; align-items: center; padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff; border-radius: 16px; width: 100%; max-width: 660px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+  animation: popIn .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from { transform: scale(.93); opacity:0; } to { transform: scale(1); opacity:1; } }
+
+.modal-header {
+  background: #1a4a8a; color: #fff; padding: 1.2rem 1.5rem;
+  border-radius: 16px 16px 0 0; position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.modal-header h2 { font-size: 14px; font-weight: 600; line-height: 1.5; }
+.modal-header p  { font-size: 11px; opacity: .7; margin-top: 3px; }
+.modal-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff; cursor: pointer;
+  width: 28px; height: 28px; border-radius: 50%; font-size: 15px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background .15s;
+}
+.modal-close:hover { background: rgba(255,255,255,.3); }
+.modal-body { padding: 1.25rem 1.5rem 1.5rem; }
+
+.modal-kpi-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 1.25rem; }
+.mkpi { background: #f8fafc; border-radius: 8px; padding: 10px 12px; border: 1px solid #e2e8f0; text-align: center; }
+.mkpi .mk-lbl { font-size: 10px; color: #64748b; margin-bottom: 3px; }
+.mkpi .mk-val { font-size: 20px; font-weight: 600; color: #1a4a8a; }
+
+.msec { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin: 1.1rem 0 8px; }
+
+/* Stat bars */
+.stat-bars { display: flex; flex-direction: column; gap: 7px; margin-bottom: 4px; }
+.sbar-row  { display: flex; align-items: center; gap: 8px; }
+.sbar-lbl  { font-size: 11px; color: #475569; width: 100px; flex-shrink: 0; }
+.sbar-track { flex: 1; background: #f1f5f9; border-radius: 4px; height: 22px; overflow: hidden; }
+.sbar-fill  { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; min-width: 2px; }
+.sbar-fill span { font-size: 10px; font-weight: 600; color: #fff; white-space: nowrap; }
+.sbar-pct   { font-size: 11px; color: #64748b; width: 40px; text-align: right; flex-shrink: 0; }
+
+.modal-chart-wrap { position: relative; width: 100%; height: 180px; margin-top: 8px; }
+.modal-tbl table { font-size: 11px; }
+.modal-tbl th { font-size: 10px; padding: 6px 8px; }
+.modal-tbl td { padding: 6px 8px; }
+
+@media (max-width: 560px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .kpi-row .kpi:last-child { grid-column: span 2; }
+  .modal-kpi-row { grid-template-columns: 1fr 1fr; }
+  .modal-kpi-row .mkpi:last-child { grid-column: span 2; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>📊 Analisis SPM 2025 — Sekolah Agama Bantuan Kerajaan (SABK)</h1>
+    <p>Unit Sains dan Matematik &nbsp;|&nbsp; Jabatan Pelajaran Negeri Kedah &nbsp;|&nbsp; Klik nama sekolah untuk lihat butiran penuh</p>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap" id="srchwrap">
+    <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8.5" cy="8.5" r="5.5"/><line x1="13.5" y1="13.5" x2="18" y2="18" stroke-linecap="round"/>
+    </svg>
+    <input type="text" id="srch" placeholder="🔍  Taip nama sekolah untuk cari dan lihat profil...">
+    <div class="search-results" id="srch-dd"></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Jumlah pelajar duduki</div><div class="kpi-val" id="kpi-d">—</div><div class="kpi-sub">Semua subjek &amp; sekolah</div></div>
+    <div class="kpi"><div class="kpi-label">Purata % lulus</div><div class="kpi-val" id="kpi-l">—</div><div class="kpi-sub">Min keseluruhan</div></div>
+    <div class="kpi"><div class="kpi-label">GPMP purata</div><div class="kpi-val" id="kpi-g">—</div><div class="kpi-sub">Nilai rendah = lebih baik</div></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">Perbandingan GPMP mengikut mata pelajaran</div>
+    <div class="chart-wrap" style="height:220px;"><canvas id="cmp"></canvas></div>
+    <div class="info-note">* Data SABK ini mengandungi 3 daripada 7 mata pelajaran sasaran: Matematik, Sains, dan Matematik Tambahan.</div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">Prestasi sekolah SABK — klik bar untuk lihat profil sekolah</div>
+    <div class="controls">
+      <label>Mata pelajaran:</label>
+      <select id="sel-mp"><option value="ALL">Semua</option><option value="MATEMATIK">Matematik</option><option value="SAINS">Sains</option><option value="MATEMATIK TAMBAHAN">Matematik Tambahan</option></select>
+      <label style="margin-left:8px;">Metrik:</label>
+      <div class="tab-row">
+        <button class="tab active" onclick="setMetric('gpmp',this)">GPMP</button>
+        <button class="tab" onclick="setMetric('pct_lulus',this)">% Lulus</button>
+      </div>
+    </div>
+    <div class="chart-wrap" id="school-wrap"><canvas id="csc"></canvas></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">Jadual data terperinci</div>
+    <div class="controls">
+      <label>Tapis MP:</label>
+      <select id="tbl-mp"><option value="ALL">Semua</option><option value="MATEMATIK">Matematik</option><option value="SAINS">Sains</option><option value="MATEMATIK TAMBAHAN">Matematik Tambahan</option></select>
+      <label style="margin-left:8px;">Susun:</label>
+      <select id="tbl-sort">
+        <option value="gpmp_asc">GPMP terbaik dahulu</option>
+        <option value="lulus_desc">% Lulus tertinggi dahulu</option>
+        <option value="duduki_desc">Pelajar terbanyak dahulu</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>#</th><th>Sekolah</th><th>MP</th><th>Duduki</th><th>% A</th><th>% Kredit</th><th>% Lulus</th><th>GPMP</th></tr></thead>
+      <tbody id="tbl-body"></tbody></table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">Ringkasan statistik mengikut mata pelajaran</div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Mata pelajaran</th><th>Bil sekolah</th><th>Jumlah pelajar</th><th>Purata % lulus</th><th>Min GPMP</th><th>Purata GPMP</th><th>Maks GPMP</th></tr></thead>
+      <tbody id="sum-body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="moverlay" onclick="closeMOut(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div><h2 id="m-name">—</h2><p id="m-sub">—</p></div>
+      <button class="modal-close" onclick="closeM()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-kpi-row">
+        <div class="mkpi"><div class="mk-lbl">Jumlah pelajar</div><div class="mk-val" id="m-d">—</div></div>
+        <div class="mkpi"><div class="mk-lbl">Purata % lulus</div><div class="mk-val" id="m-l">—</div></div>
+        <div class="mkpi"><div class="mk-lbl">GPMP purata</div><div class="mk-val" id="m-g">—</div></div>
+      </div>
+
+      <div class="msec">Prestasi gred keseluruhan</div>
+      <div class="stat-bars" id="m-bars"></div>
+
+      <div class="msec">Butiran mengikut mata pelajaran</div>
+      <div class="modal-tbl tbl-wrap">
+        <table><thead><tr><th>Mata pelajaran</th><th>Duduki</th><th>% A</th><th>% Kredit</th><th>% Lulus</th><th>% Gagal</th><th>GPMP</th></tr></thead>
+        <tbody id="m-tbody"></tbody></table>
+      </div>
+
+      <div class="msec">Perbandingan GPMP mengikut subjek</div>
+      <div class="modal-chart-wrap"><canvas id="m-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RAW=[{"ppd":"BLG","sekolah":"MAKTAB MAHMUD BALING","mp":"MATEMATIK","duduki":40,"pct_a":32.5,"pct_kredit":72.5,"pct_lulus":97.5,"pct_gagal":2.5,"gpmp":4.125},{"ppd":"BLG","sekolah":"MAKTAB MAHMUD BALING","mp":"SAINS","duduki":40,"pct_a":57.5,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":2.225},{"ppd":"BLG","sekolah":"MAKTAB MAHMUD BALING","mp":"MATEMATIK TAMBAHAN","duduki":10,"pct_a":10,"pct_kredit":70,"pct_lulus":80,"pct_gagal":20,"gpmp":6.0},{"ppd":"BLG","sekolah":"SM AGAMA (ARAB) ANNAJAH","mp":"MATEMATIK","duduki":66,"pct_a":39.39,"pct_kredit":68.18,"pct_lulus":98.48,"pct_gagal":1.52,"gpmp":4.121},{"ppd":"BLG","sekolah":"SM AGAMA (ARAB) ANNAJAH","mp":"SAINS","duduki":66,"pct_a":51.52,"pct_kredit":96.97,"pct_lulus":100,"pct_gagal":0,"gpmp":2.697},{"ppd":"KBB","sekolah":"SMA ISLAHIAH","mp":"MATEMATIK","duduki":41,"pct_a":31.71,"pct_kredit":60.98,"pct_lulus":97.56,"pct_gagal":2.44,"gpmp":4.61},{"ppd":"KBB","sekolah":"SMA ISLAHIAH","mp":"SAINS","duduki":41,"pct_a":39.02,"pct_kredit":82.93,"pct_lulus":100,"pct_gagal":0,"gpmp":4.0},{"ppd":"KBB","sekolah":"MAKTAB MAHMUD BANDAR BAHARU","mp":"MATEMATIK","duduki":42,"pct_a":38.10,"pct_kredit":85.71,"pct_lulus":100,"pct_gagal":0,"gpmp":3.667},{"ppd":"KBB","sekolah":"MAKTAB MAHMUD BANDAR BAHARU","mp":"SAINS","duduki":42,"pct_a":78.57,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":1.5},{"ppd":"KBB","sekolah":"MAKTAB MAHMUD KULIM","mp":"MATEMATIK","duduki":53,"pct_a":47.17,"pct_kredit":81.13,"pct_lulus":100,"pct_gagal":0,"gpmp":3.321},{"ppd":"KBB","sekolah":"MAKTAB MAHMUD KULIM","mp":"SAINS","duduki":53,"pct_a":75.47,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":1.830},{"ppd":"KM","sekolah":"SM AKADEMI ISLAM DARUL AMAN","mp":"MATEMATIK","duduki":19,"pct_a":31.58,"pct_kredit":57.89,"pct_lulus":89.47,"pct_gagal":10.53,"gpmp":4.842},{"ppd":"KM","sekolah":"SM AKADEMI ISLAM DARUL AMAN","mp":"SAINS","duduki":19,"pct_a":63.16,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":2.053},{"ppd":"KM","sekolah":"MAKTAB MAHMUD KUALA MUDA","mp":"MATEMATIK","duduki":40,"pct_a":62.5,"pct_kredit":90,"pct_lulus":100,"pct_gagal":0,"gpmp":2.55},{"ppd":"KM","sekolah":"MAKTAB MAHMUD KUALA MUDA","mp":"SAINS","duduki":40,"pct_a":77.5,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":1.7},{"ppd":"KM","sekolah":"MAKTAB MAHMUD MERBOK","mp":"MATEMATIK","duduki":47,"pct_a":31.91,"pct_kredit":65.96,"pct_lulus":95.74,"pct_gagal":4.26,"gpmp":4.383},{"ppd":"KM","sekolah":"MAKTAB MAHMUD MERBOK","mp":"SAINS","duduki":47,"pct_a":72.34,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":1.872},{"ppd":"KP","sekolah":"SM AGAMA HIDAYAH ISLAMIAH","mp":"MATEMATIK","duduki":46,"pct_a":84.78,"pct_kredit":97.83,"pct_lulus":100,"pct_gagal":0,"gpmp":1.435},{"ppd":"KP","sekolah":"SM AGAMA HIDAYAH ISLAMIAH","mp":"SAINS","duduki":46,"pct_a":76.09,"pct_kredit":97.83,"pct_lulus":100,"pct_gagal":0,"gpmp":1.652},{"ppd":"KP","sekolah":"SMA NURUL ISLAM AYER HITAM","mp":"MATEMATIK","duduki":49,"pct_a":53.06,"pct_kredit":71.43,"pct_lulus":93.88,"pct_gagal":6.12,"gpmp":3.714},{"ppd":"KP","sekolah":"SMA NURUL ISLAM AYER HITAM","mp":"SAINS","duduki":49,"pct_a":48.98,"pct_kredit":85.71,"pct_lulus":100,"pct_gagal":0,"gpmp":3.163},{"ppd":"KS","sekolah":"SM AGAMA DARRUSAADAH","mp":"MATEMATIK","duduki":89,"pct_a":43.82,"pct_kredit":78.65,"pct_lulus":96.63,"pct_gagal":3.37,"gpmp":3.854},{"ppd":"KS","sekolah":"SM AGAMA DARRUSAADAH","mp":"SAINS","duduki":89,"pct_a":66.29,"pct_kredit":98.88,"pct_lulus":100,"pct_gagal":0,"gpmp":2.022},{"ppd":"KS","sekolah":"SM AGAMA IHYA UL-ULUM AD-DINIAH","mp":"MATEMATIK","duduki":25,"pct_a":76,"pct_kredit":92,"pct_lulus":100,"pct_gagal":0,"gpmp":2.12},{"ppd":"KS","sekolah":"SM AGAMA IHYA UL-ULUM AD-DINIAH","mp":"SAINS","duduki":25,"pct_a":56,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":2.6},{"ppd":"KS","sekolah":"MAKTAB MAHMUD POKOK SENA","mp":"MATEMATIK","duduki":79,"pct_a":69.62,"pct_kredit":92.41,"pct_lulus":100,"pct_gagal":0,"gpmp":2.253},{"ppd":"KS","sekolah":"MAKTAB MAHMUD POKOK SENA","mp":"SAINS","duduki":79,"pct_a":41.77,"pct_kredit":97.47,"pct_lulus":100,"pct_gagal":0,"gpmp":2.987},{"ppd":"LKW","sekolah":"MAKTAB MAHMUD LANGKAWI","mp":"MATEMATIK","duduki":68,"pct_a":44.12,"pct_kredit":80.88,"pct_lulus":100,"pct_gagal":0,"gpmp":3.441},{"ppd":"LKW","sekolah":"MAKTAB MAHMUD LANGKAWI","mp":"SAINS","duduki":68,"pct_a":77.94,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":1.647},{"ppd":"PDG","sekolah":"SMA MA'AHAD TAHFIZ AL-ABIDIN","mp":"MATEMATIK","duduki":51,"pct_a":62.75,"pct_kredit":94.12,"pct_lulus":100,"pct_gagal":0,"gpmp":2.490},{"ppd":"PDG","sekolah":"SMA MA'AHAD TAHFIZ AL-ABIDIN","mp":"SAINS","duduki":51,"pct_a":54.90,"pct_kredit":96.08,"pct_lulus":100,"pct_gagal":0,"gpmp":2.529},{"ppd":"PDG","sekolah":"MA'AHAD AL IMAM AL SYAFIE","mp":"MATEMATIK","duduki":15,"pct_a":33.33,"pct_kredit":46.67,"pct_lulus":86.67,"pct_gagal":13.33,"gpmp":5.467},{"ppd":"PDG","sekolah":"MA'AHAD AL IMAM AL SYAFIE","mp":"SAINS","duduki":15,"pct_a":26.67,"pct_kredit":86.67,"pct_lulus":100,"pct_gagal":0,"gpmp":3.6},{"ppd":"PDG","sekolah":"MAKTAB MAHMUD PENDANG","mp":"MATEMATIK","duduki":46,"pct_a":60.87,"pct_kredit":93.48,"pct_lulus":100,"pct_gagal":0,"gpmp":2.565},{"ppd":"PDG","sekolah":"MAKTAB MAHMUD PENDANG","mp":"SAINS","duduki":46,"pct_a":82.61,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":1.630},{"ppd":"PT","sekolah":"SMA DARIL IKTISAM","mp":"MATEMATIK","duduki":31,"pct_a":61.29,"pct_kredit":80.65,"pct_lulus":100,"pct_gagal":0,"gpmp":3.161},{"ppd":"PT","sekolah":"SMA DARIL IKTISAM","mp":"SAINS","duduki":31,"pct_a":35.48,"pct_kredit":93.55,"pct_lulus":100,"pct_gagal":0,"gpmp":3.323},{"ppd":"PT","sekolah":"SM AGAMA AL-ISLAHIAH AL-ISLAMIAH","mp":"MATEMATIK","duduki":15,"pct_a":46.67,"pct_kredit":80,"pct_lulus":100,"pct_gagal":0,"gpmp":3.733},{"ppd":"PT","sekolah":"SM AGAMA AL-ISLAHIAH AL-ISLAMIAH","mp":"SAINS","duduki":15,"pct_a":60,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":2.533},{"ppd":"PT","sekolah":"MAKTAB MAHMUD PADANG TERAP","mp":"MATEMATIK","duduki":54,"pct_a":46.30,"pct_kredit":77.78,"pct_lulus":100,"pct_gagal":0,"gpmp":3.389},{"ppd":"PT","sekolah":"MAKTAB MAHMUD PADANG TERAP","mp":"SAINS","duduki":54,"pct_a":48.15,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":2.704},{"ppd":"SIK","sekolah":"MAAHAD DINI SULTAN ABDUL HALIM","mp":"MATEMATIK","duduki":18,"pct_a":33.33,"pct_kredit":77.78,"pct_lulus":100,"pct_gagal":0,"gpmp":3.944},{"ppd":"SIK","sekolah":"MAAHAD DINI SULTAN ABDUL HALIM","mp":"SAINS","duduki":18,"pct_a":61.11,"pct_kredit":88.89,"pct_lulus":100,"pct_gagal":0,"gpmp":2.722},{"ppd":"SIK","sekolah":"MAKTAB MAHMUD SIK","mp":"MATEMATIK","duduki":45,"pct_a":44.44,"pct_kredit":77.78,"pct_lulus":100,"pct_gagal":0,"gpmp":3.733},{"ppd":"SIK","sekolah":"MAKTAB MAHMUD SIK","mp":"SAINS","duduki":45,"pct_a":57.78,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":2.489},{"ppd":"SIK","sekolah":"SM AGAMA IRSYADIAH","mp":"MATEMATIK","duduki":45,"pct_a":11.11,"pct_kredit":33.33,"pct_lulus":88.89,"pct_gagal":11.11,"gpmp":6.489},{"ppd":"SIK","sekolah":"SM AGAMA IRSYADIAH","mp":"SAINS","duduki":45,"pct_a":28.89,"pct_kredit":86.67,"pct_lulus":100,"pct_gagal":0,"gpmp":3.867},{"ppd":"YAN","sekolah":"SM AGAMA SUNGAI PETANI","mp":"MATEMATIK","duduki":52,"pct_a":28.85,"pct_kredit":69.23,"pct_lulus":100,"pct_gagal":0,"gpmp":4.481},{"ppd":"YAN","sekolah":"SM AGAMA SUNGAI PETANI","mp":"SAINS","duduki":52,"pct_a":59.62,"pct_kredit":98.08,"pct_lulus":100,"pct_gagal":0,"gpmp":2.346},{"ppd":"YAN","sekolah":"SM AGAMA PEKAN GURUN","mp":"MATEMATIK","duduki":35,"pct_a":37.14,"pct_kredit":77.14,"pct_lulus":97.14,"pct_gagal":2.86,"gpmp":4.029},{"ppd":"YAN","sekolah":"SM AGAMA PEKAN GURUN","mp":"SAINS","duduki":35,"pct_a":62.86,"pct_kredit":100,"pct_lulus":100,"pct_gagal":0,"gpmp":2.143},{"ppd":"YAN","sekolah":"SM AGAMA SAADAH ALDINIAH AL ISLAMIAH","mp":"MATEMATIK","duduki":54,"pct_a":11.11,"pct_kredit":33.33,"pct_lulus":88.89,"pct_gagal":11.11,"gpmp":6.167},{"ppd":"YAN","sekolah":"SM AGAMA SAADAH ALDINIAH AL ISLAMIAH","mp":"SAINS","duduki":54,"pct_a":50,"pct_kredit":98.15,"pct_lulus":100,"pct_gagal":0,"gpmp":2.5},{"ppd":"YAN","sekolah":"SM AGAMA FAUZI","mp":"MATEMATIK","duduki":56,"pct_a":17.86,"pct_kredit":58.93,"pct_lulus":89.29,"pct_gagal":10.71,"gpmp":5.429},{"ppd":"YAN","sekolah":"SM AGAMA FAUZI","mp":"SAINS","duduki":56,"pct_a":44.64,"pct_kredit":98.21,"pct_lulus":100,"pct_gagal":0,"gpmp":2.911}];
+
+const MPC={'MATEMATIK':'#2e7dd1','SAINS':'#1d9e75','MATEMATIK TAMBAHAN':'#ba7517'};
+const MPL={'MATEMATIK':'#dbeafe','SAINS':'#d1fae5','MATEMATIK TAMBAHAN':'#fef3c7'};
+const MPT={'MATEMATIK':'#1e40af','SAINS':'#065f46','MATEMATIK TAMBAHAN':'#92400e'};
+const SCHOOLS=[...new Set(RAW.map(r=>r.sekolah))].sort();
+
+let metric='gpmp', CMP=null, CSC=null, CMO=null;
+const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:0;
+
+const gBadge=g=>{if(!g&&g!==0)return'<span class="badge" style="background:#f1f5f9;color:#64748b;">—</span>';const c=g<=3?'badge-good':g<=5?'badge-mid':'badge-low';return`<span class="badge ${c}">${g.toFixed(3)}</span>`;};
+const lBadge=l=>{const c=l>=95?'badge-good':l>=80?'badge-mid':'badge-low';return`<span class="badge ${c}">${l.toFixed(1)}%</span>`;};
+const mpB=mp=>`<span class="badge-mp" style="background:${MPL[mp]};color:${MPT[mp]};">${mp}</span>`;
+const sLink=n=>`<span class="school-link" onclick="openM(${JSON.stringify(n)})">${n}</span>`;
+
+function updateKPI(){
+  document.getElementById('kpi-d').textContent=RAW.reduce((s,r)=>s+r.duduki,0).toLocaleString();
+  document.getElementById('kpi-l').textContent=avg(RAW.map(r=>r.pct_lulus)).toFixed(1)+'%';
+  document.getElementById('kpi-g').textContent=avg(RAW.map(r=>r.gpmp)).toFixed(3);
+}
+
+function renderMP(){
+  const mps=['MATEMATIK','SAINS','MATEMATIK TAMBAHAN'];
+  const vals=mps.map(m=>avg(RAW.filter(r=>r.mp===m).map(r=>r.gpmp)));
+  if(CMP)CMP.destroy();
+  CMP=new Chart(document.getElementById('cmp'),{type:'bar',data:{labels:['Matematik','Sains','Matematik Tambahan'],datasets:[{data:vals,backgroundColor:mps.map(m=>MPC[m]),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' GPMP: '+c.raw.toFixed(3)}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:11}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#64748b',font:{size:11}},title:{display:true,text:'GPMP purata',color:'#94a3b8',font:{size:11}}}}}});
+}
+
+function renderSC(){
+  const sel=document.getElementById('sel-mp').value;
+  let rows=sel==='ALL'?RAW:RAW.filter(r=>r.mp===sel);
+  const schools=[...new Set(rows.map(r=>r.sekolah))];
+  let agg=schools.map(s=>{const sr=rows.filter(r=>r.sekolah===s);return{s,val:metric==='gpmp'?avg(sr.map(r=>r.gpmp)):avg(sr.map(r=>r.pct_lulus))};});
+  metric==='gpmp'?agg.sort((a,b)=>a.val-b.val):agg.sort((a,b)=>b.val-a.val);
+  document.getElementById('school-wrap').style.height=Math.max(320,agg.length*42+70)+'px';
+  if(CSC)CSC.destroy();
+  CSC=new Chart(document.getElementById('csc'),{
+    type:'bar',
+    data:{labels:agg.map(a=>a.s),datasets:[{data:agg.map(a=>a.val),backgroundColor:metric==='gpmp'?'#2e7dd1':'#1d9e75',borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>metric==='gpmp'?' GPMP: '+c.raw.toFixed(3):' % Lulus: '+c.raw.toFixed(1)+'%'}}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{display:false},ticks:{color:'#334155',font:{size:10}}}},onClick:(_,els)=>{if(els.length)openM(agg[els[0].index].s);}}
+  });
+}
+
+function renderTbl(){
+  const sm=document.getElementById('tbl-mp').value,ss=document.getElementById('tbl-sort').value;
+  let rows=sm==='ALL'?[...RAW]:RAW.filter(r=>r.mp===sm);
+  if(ss==='gpmp_asc')rows.sort((a,b)=>a.gpmp-b.gpmp);
+  else if(ss==='lulus_desc')rows.sort((a,b)=>b.pct_lulus-a.pct_lulus);
+  else rows.sort((a,b)=>b.duduki-a.duduki);
+  document.getElementById('tbl-body').innerHTML=rows.map((r,i)=>`<tr><td><span class="rank">${i+1}</span></td><td style="font-size:11px;">${sLink(r.sekolah)}</td><td>${mpB(r.mp)}</td><td>${r.duduki}</td><td>${r.pct_a.toFixed(1)}%</td><td>${r.pct_kredit.toFixed(1)}%</td><td>${lBadge(r.pct_lulus)}</td><td>${gBadge(r.gpmp)}</td></tr>`).join('');
+}
+
+function renderSum(){
+  const mps=['MATEMATIK','SAINS','MATEMATIK TAMBAHAN'];
+  document.getElementById('sum-body').innerHTML=mps.map(mp=>{
+    const rows=RAW.filter(r=>r.mp===mp);if(!rows.length)return'';
+    const gv=rows.map(r=>r.gpmp);
+    return`<tr><td>${mpB(mp)}</td><td>${new Set(rows.map(r=>r.sekolah)).size}</td><td>${rows.reduce((s,r)=>s+r.duduki,0).toLocaleString()}</td><td>${avg(rows.map(r=>r.pct_lulus)).toFixed(1)}%</td><td>${Math.min(...gv).toFixed(3)}</td><td><strong>${avg(gv).toFixed(3)}</strong></td><td>${Math.max(...gv).toFixed(3)}</td></tr>`;
+  }).join('');
+}
+
+function setMetric(m,btn){metric=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderSC();}
+
+/* ─── SEARCH ─── */
+const SI=document.getElementById('srch'),SD=document.getElementById('srch-dd');
+SI.addEventListener('input',()=>{
+  const q=SI.value.trim().toUpperCase();
+  if(!q){SD.style.display='none';return;}
+  const hits=SCHOOLS.filter(s=>s.toUpperCase().includes(q));
+  SD.innerHTML=hits.length
+    ?hits.map(s=>{const ppd=RAW.find(r=>r.sekolah===s)?.ppd||'';return`<div class="search-item" onclick="openM(${JSON.stringify(s)});SI.value='';SD.style.display='none';"><span class="ppd-tag">${ppd}</span>${s}</div>`;}).join('')
+    :'<div class="search-no">Tiada sekolah dijumpai.</div>';
+  SD.style.display='block';
+});
+document.addEventListener('click',e=>{if(!document.getElementById('srchwrap').contains(e.target))SD.style.display='none';});
+
+/* ─── MODAL ─── */
+function openM(name){
+  SD.style.display='none';
+  const rows=RAW.filter(r=>r.sekolah===name);
+  if(!rows.length)return;
+  const ppd=rows[0].ppd;
+  document.getElementById('m-name').textContent=name;
+  document.getElementById('m-sub').textContent=`PPD: ${ppd}  ·  ${rows.length} mata pelajaran  ·  SPM 2025`;
+  document.getElementById('m-d').textContent=rows.reduce((s,r)=>s+r.duduki,0).toLocaleString();
+  document.getElementById('m-l').textContent=avg(rows.map(r=>r.pct_lulus)).toFixed(1)+'%';
+  document.getElementById('m-g').textContent=avg(rows.map(r=>r.gpmp)).toFixed(3);
+
+  /* Grade bars */
+  const bars=[
+    {lbl:'Gred A (keseluruhan)',val:avg(rows.map(r=>r.pct_a)),col:'#16a34a'},
+    {lbl:'Kredit (A hingga C)',val:avg(rows.map(r=>r.pct_kredit)),col:'#2563eb'},
+    {lbl:'Lulus',val:avg(rows.map(r=>r.pct_lulus)),col:'#0891b2'},
+    {lbl:'Gagal',val:avg(rows.map(r=>r.pct_gagal)),col:'#dc2626'},
+  ];
+  document.getElementById('m-bars').innerHTML=bars.map(b=>`
+    <div class="sbar-row">
+      <span class="sbar-lbl">${b.lbl}</span>
+      <div class="sbar-track">
+        <div class="sbar-fill" style="width:${Math.max(b.val,0).toFixed(1)}%;background:${b.col};">
+          ${b.val>=8?`<span>${b.val.toFixed(1)}%</span>`:''}
+        </div>
+      </div>
+      <span class="sbar-pct">${b.val.toFixed(1)}%</span>
+    </div>`).join('');
+
+  /* MP table */
+  document.getElementById('m-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td>${mpB(r.mp)}</td>
+      <td>${r.duduki}</td>
+      <td>${r.pct_a.toFixed(1)}%</td>
+      <td>${r.pct_kredit.toFixed(1)}%</td>
+      <td>${lBadge(r.pct_lulus)}</td>
+      <td>${r.pct_gagal.toFixed(1)}%</td>
+      <td>${gBadge(r.gpmp)}</td>
+    </tr>`).join('');
+
+  /* Modal chart */
+  if(CMO)CMO.destroy();
+  CMO=new Chart(document.getElementById('m-chart'),{
+    type:'bar',
+    data:{labels:rows.map(r=>r.mp),datasets:[{data:rows.map(r=>r.gpmp),backgroundColor:rows.map(r=>MPC[r.mp]||'#2e7dd1'),borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' GPMP: '+c.raw.toFixed(3)}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:11}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#64748b',font:{size:11}},title:{display:true,text:'GPMP',color:'#94a3b8',font:{size:11}}}}}
+  });
+
+  document.getElementById('moverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeM(){document.getElementById('moverlay').classList.remove('open');document.body.style.overflow='';}
+function closeMOut(e){if(e.target===document.getElementById('moverlay'))closeM();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
+
+document.getElementById('sel-mp').addEventListener('change',renderSC);
+document.getElementById('tbl-mp').addEventListener('change',renderTbl);
+document.getElementById('tbl-sort').addEventListener('change',renderTbl);
+
+updateKPI();renderMP();renderSC();renderTbl();renderSum();
+</script>
+</body>
+</html>
